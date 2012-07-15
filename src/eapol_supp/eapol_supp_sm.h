@@ -2,14 +2,8 @@
  * EAPOL supplicant state machines
  * Copyright (c) 2004-2008, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifndef EAPOL_SUPP_SM_H
@@ -208,10 +202,10 @@ struct eapol_ctx {
 	/**
 	 * eap_param_needed - Notify that EAP parameter is needed
 	 * @ctx: Callback context (ctx)
-	 * @field: Field name (e.g., "IDENTITY")
+	 * @field: Field indicator (e.g., WPA_CTRL_REQ_EAP_IDENTITY)
 	 * @txt: User readable text describing the required parameter
 	 */
-	void (*eap_param_needed)(void *ctx, const char *field,
+	void (*eap_param_needed)(void *ctx, enum wpa_ctrl_req_type field,
 				 const char *txt);
 
 	/**
@@ -231,6 +225,11 @@ struct eapol_ctx {
 	 */
 	void (*cert_cb)(void *ctx, int depth, const char *subject,
 			const char *cert_hash, const struct wpabuf *cert);
+
+	/**
+	 * cert_in_cb - Include server certificates in callback
+	 */
+	int cert_in_cb;
 };
 
 

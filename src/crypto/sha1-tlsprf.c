@@ -2,14 +2,8 @@
  * TLS PRF (SHA1 + MD5)
  * Copyright (c) 2003-2005, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -17,11 +11,10 @@
 #include "common.h"
 #include "sha1.h"
 #include "md5.h"
-#include "crypto.h"
 
 
 /**
- * tls_prf - Pseudo-Random Function for TLS (TLS-PRF, RFC 2246)
+ * tls_prf_sha1_md5 - Pseudo-Random Function for TLS (TLS-PRF, RFC 2246)
  * @secret: Key for PRF
  * @secret_len: Length of the key in bytes
  * @label: A unique label for each purpose of the PRF
@@ -34,8 +27,8 @@
  * This function is used to derive new, cryptographically separate keys from a
  * given key in TLS. This PRF is defined in RFC 2246, Chapter 5.
  */
-int tls_prf(const u8 *secret, size_t secret_len, const char *label,
-	    const u8 *seed, size_t seed_len, u8 *out, size_t outlen)
+int tls_prf_sha1_md5(const u8 *secret, size_t secret_len, const char *label,
+		     const u8 *seed, size_t seed_len, u8 *out, size_t outlen)
 {
 	size_t L_S1, L_S2, i;
 	const u8 *S1, *S2;

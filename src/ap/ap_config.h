@@ -2,14 +2,8 @@
  * hostapd / Configuration definitions and helpers functions
  * Copyright (c) 2003-2009, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifndef HOSTAPD_CONFIG_H
@@ -104,7 +98,6 @@ struct hostapd_wpa_psk {
 	u8 addr[ETH_ALEN];
 };
 
-#define EAP_USER_MAX_METHODS 8
 struct hostapd_eap_user {
 	struct hostapd_eap_user *next;
 	u8 *identity;
@@ -112,7 +105,7 @@ struct hostapd_eap_user {
 	struct {
 		int vendor;
 		u32 method;
-	} methods[EAP_USER_MAX_METHODS];
+	} methods[EAP_MAX_METHODS];
 	u8 *password;
 	size_t password_len;
 	int phase2;
@@ -141,6 +134,13 @@ struct hostapd_wmm_ac_params {
 	int admission_control_mandatory;
 };
 
+
+#define MAX_ROAMING_CONSORTIUM_LEN 15
+
+struct hostapd_roaming_consortium {
+	u8 len;
+	u8 oi[MAX_ROAMING_CONSORTIUM_LEN];
+};
 
 /**
  * struct hostapd_bss_config - Per-BSS configuration
@@ -213,6 +213,11 @@ struct hostapd_bss_config {
 	/* dot11AssociationSAQueryRetryTimeout (in TUs) */
 	int assoc_sa_query_retry_timeout;
 #endif /* CONFIG_IEEE80211W */
+	enum {
+		PSK_RADIUS_IGNORED = 0,
+		PSK_RADIUS_ACCEPTED = 1,
+		PSK_RADIUS_REQUIRED = 2
+	} wpa_psk_radius;
 	int wpa_pairwise;
 	int wpa_group;
 	int wpa_group_rekey;
@@ -297,6 +302,9 @@ struct hostapd_bss_config {
 	u8 uuid[16];
 	char *wps_pin_requests;
 	char *device_name;
+#ifdef ANDROID_P2P
+	char *prioritize;
+#endif
 	char *manufacturer;
 	char *model_name;
 	char *model_number;
@@ -329,11 +337,38 @@ struct hostapd_bss_config {
 	int p2p;
 
 	int disassoc_low_ack;
+	int skip_inactivity_poll;
 
 #define TDLS_PROHIBIT BIT(0)
 #define TDLS_PROHIBIT_CHAN_SWITCH BIT(1)
 	int tdls;
 	int disable_11n;
+
+	/* IEEE 802.11v */
+	int time_advertisement;
+	char *time_zone;
+
+	/* IEEE 802.11u - Interworking */
+	int interworking;
+	int access_network_type;
+	int internet;
+	int asra;
+	int esr;
+	int uesa;
+	int venue_info_set;
+	u8 venue_group;
+	u8 venue_type;
+	u8 hessid[ETH_ALEN];
+
+	/* IEEE 802.11u - Roaming Consortium list */
+	unsigned int roaming_consortium_count;
+	struct hostapd_roaming_consortium *roaming_consortium;
+
+	u8 wps_rf_bands; /* RF bands for WPS (WPS_RF_*) */
+
+#ifdef CONFIG_RADIUS_TEST
+	char *dump_msk_file;
+#endif /* CONFIG_RADIUS_TEST */
 };
 
 
@@ -354,12 +389,6 @@ struct hostapd_config {
 		LONG_PREAMBLE = 0,
 		SHORT_PREAMBLE = 1
 	} preamble;
-	enum {
-		CTS_PROTECTION_AUTOMATIC = 0,
-		CTS_PROTECTION_FORCE_ENABLED = 1,
-		CTS_PROTECTION_FORCE_DISABLED = 2,
-		CTS_PROTECTION_AUTOMATIC_NO_OLBC = 3,
-	} cts_protection_type;
 
 	int *supported_rates;
 	int *basic_rates;

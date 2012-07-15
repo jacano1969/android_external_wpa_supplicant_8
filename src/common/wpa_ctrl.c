@@ -2,14 +2,8 @@
  * wpa_supplicant/hostapd control interface library
  * Copyright (c) 2004-2007, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -21,6 +15,7 @@
 #endif /* CONFIG_CTRL_IFACE_UNIX */
 
 #ifdef ANDROID
+#include <dirent.h>
 #include <cutils/sockets.h>
 #include "private/android_filesystem_config.h"
 #endif /* ANDROID */
@@ -174,6 +169,56 @@ void wpa_ctrl_close(struct wpa_ctrl *ctrl)
 		close(ctrl->s);
 	os_free(ctrl);
 }
+
+
+#ifdef ANDROID
+/**
+ * wpa_ctrl_cleanup() - Delete any local UNIX domain socket files that
+ * may be left over from clients that were previously connected to
+ * wpa_supplicant. This keeps these files from being orphaned in the
+ * event of crashes that prevented them from being removed as part
+ * of the normal orderly shutdown.
+ */
+void wpa_ctrl_cleanup(void)
+{
+	DIR *dir;
+	struct dirent entry;
+	struct dirent *result;
+	size_t dirnamelen;
+	int prefixlen = os_strlen(CONFIG_CTRL_IFACE_CLIENT_PREFIX);
+	size_t maxcopy;
+	char pathname[PATH_MAX];
+	char *namep;
+
+	if ((dir = opendir(CONFIG_CTRL_IFACE_CLIENT_DIR)) == NULL)
+		return;
+
+	dirnamelen = (size_t) os_snprintf(pathname, sizeof(pathname), "%s/",
+					  CONFIG_CTRL_IFACE_CLIENT_DIR);
+	if (dirnamelen >= sizeof(pathname)) {
+		closedir(dir);
+		return;
+	}
+	namep = pathname + dirnamelen;
+	maxcopy = PATH_MAX - dirnamelen;
+	while (readdir_r(dir, &entry, &result) == 0 && result != NULL) {
+		if (os_strncmp(entry.d_name, CONFIG_CTRL_IFACE_CLIENT_PREFIX,
+			       prefixlen) == 0) {
+			if (os_strlcpy(namep, entry.d_name, maxcopy) < maxcopy)
+				unlink(pathname);
+		}
+	}
+	closedir(dir);
+}
+#endif /* ANDROID */
+
+#else /* CONFIG_CTRL_IFACE_UNIX */
+
+#ifdef ANDROID
+void wpa_ctrl_cleanup(void)
+{
+}
+#endif /* ANDROID */
 
 #endif /* CONFIG_CTRL_IFACE_UNIX */
 

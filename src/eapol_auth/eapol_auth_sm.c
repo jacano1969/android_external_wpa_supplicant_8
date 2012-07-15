@@ -2,14 +2,8 @@
  * IEEE 802.1X-2004 Authenticator - EAPOL state machine
  * Copyright (c) 2002-2009, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -1017,7 +1011,7 @@ static struct eapol_callbacks eapol_cb =
 
 int eapol_auth_eap_pending_cb(struct eapol_state_machine *sm, void *ctx)
 {
-	if (sm == NULL || ctx != sm->eap)
+	if (sm == NULL || ctx == NULL || ctx != sm->eap)
 		return -1;
 
 	eap_sm_pending_cb(sm->eap);

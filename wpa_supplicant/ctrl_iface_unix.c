@@ -2,14 +2,8 @@
  * WPA Supplicant / UNIX domain socket -based control interface
  * Copyright (c) 2004-2009, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -170,6 +164,35 @@ static void wpa_supplicant_ctrl_iface_receive(int sock, void *eloop_ctx,
 		else
 			reply_len = 2;
 	} else {
+#if defined(CONFIG_P2P) && defined(ANDROID_P2P)
+		char *ifname = NULL, *arg;
+		char cmd[256];
+		/* Skip the command name */
+		arg = os_strchr(buf, ' ');
+		if (arg) {
+			*arg++ = '\0';
+			os_strncpy(cmd, buf, sizeof(cmd));
+			/* Now search for interface= */
+			if (os_strncmp(arg, "interface=", 10) == 0) {
+				ifname = arg + 10;
+				arg = os_strchr(ifname, ' ');
+				if (arg)
+					*arg++ = '\0';
+				wpa_printf(MSG_DEBUG, "Found interface= in the arg %s ifname %s", arg, ifname);
+				for (wpa_s = wpa_s->global->ifaces; wpa_s; wpa_s = wpa_s->next) {
+					if (os_strcmp(wpa_s->ifname, ifname) == 0)
+						break;
+				}
+				if (wpa_s == NULL) {
+					wpa_printf(MSG_ERROR, "P2P: interface=%s does not exist", ifname);
+					wpa_s = eloop_ctx;
+				}
+			}
+			if (arg)
+				os_snprintf(buf, sizeof(buf), "%s %s", cmd, arg);
+		}
+		wpa_printf(MSG_DEBUG, "wpa_s %p cmd %s", wpa_s, buf);
+#endif /* defined CONFIG_P2P && defined ANDROID_P2P */
 		reply = wpa_supplicant_ctrl_iface_process(wpa_s, buf,
 							  &reply_len);
 	}
@@ -281,7 +304,7 @@ wpa_supplicant_ctrl_iface_init(struct wpa_supplicant *wpa_s)
 		goto fail;
 #ifdef ANDROID
 	os_snprintf(addr.sun_path, sizeof(addr.sun_path), "wpa_%s",
-		    wpa_s->ifname);
+		    wpa_s->conf->ctrl_interface);
 	priv->sock = android_get_control_socket(addr.sun_path);
 	if (priv->sock >= 0)
 		goto havesock;

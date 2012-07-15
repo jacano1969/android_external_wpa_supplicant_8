@@ -2,14 +2,8 @@
  * wpa_supplicant/hostapd control interface library
  * Copyright (c) 2004-2006, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifndef WPA_CTRL_H
@@ -62,6 +56,10 @@ extern "C" {
 #define WPA_EVENT_BSS_ADDED "CTRL-EVENT-BSS-ADDED "
 /** A BSS entry was removed (followed by BSS entry id and BSSID) */
 #define WPA_EVENT_BSS_REMOVED "CTRL-EVENT-BSS-REMOVED "
+#ifdef ANDROID_P2P
+/** Notify the Userspace about the freq conflict */
+#define WPA_EVENT_FREQ_CONFLICT "CTRL-EVENT-FREQ-CONFLICT "
+#endif
 
 /** WPS overlap detected in PBC mode */
 #define WPS_EVENT_OVERLAP "WPS-OVERLAP-DETECTED "
@@ -100,10 +98,8 @@ extern "C" {
 /** P2P device found */
 #define P2P_EVENT_DEVICE_FOUND "P2P-DEVICE-FOUND "
 
-#ifdef ANDROID_BRCM_P2P_PATCH
 /** P2P device lost */
 #define P2P_EVENT_DEVICE_LOST "P2P-DEVICE-LOST "
-#endif
 
 /** A P2P device requested GO negotiation, but we were not ready to start the
  * negotiation */
@@ -130,6 +126,10 @@ extern "C" {
 #define P2P_EVENT_SERV_DISC_RESP "P2P-SERV-DISC-RESP "
 #define P2P_EVENT_INVITATION_RECEIVED "P2P-INVITATION-RECEIVED "
 #define P2P_EVENT_INVITATION_RESULT "P2P-INVITATION-RESULT "
+#define P2P_EVENT_FIND_STOPPED "P2P-FIND-STOPPED "
+
+#define INTERWORKING_AP "INTERWORKING-AP "
+#define INTERWORKING_NO_MATCH "INTERWORKING-NO-MATCH "
 
 /* hostapd control interface - fixed message prefixes */
 #define WPS_EVENT_PIN_NEEDED "WPS-PIN-NEEDED "
@@ -266,6 +266,17 @@ int wpa_ctrl_pending(struct wpa_ctrl *ctrl);
  * wpa_ctrl_recv() must be used for this.
  */
 int wpa_ctrl_get_fd(struct wpa_ctrl *ctrl);
+
+#ifdef ANDROID
+/**
+ * wpa_ctrl_cleanup() - Delete any local UNIX domain socket files that
+ * may be left over from clients that were previously connected to
+ * wpa_supplicant. This keeps these files from being orphaned in the
+ * event of crashes that prevented them from being removed as part
+ * of the normal orderly shutdown.
+ */
+void wpa_ctrl_cleanup(void);
+#endif /* ANDROID */
 
 #ifdef CONFIG_CTRL_IFACE_UDP
 #define WPA_CTRL_IFACE_PORT 9877

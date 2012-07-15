@@ -2,14 +2,8 @@
  * OS specific functions
  * Copyright (c) 2005-2009, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifndef OS_H
@@ -70,6 +64,16 @@ int os_get_time(struct os_time *t);
 int os_mktime(int year, int month, int day, int hour, int min, int sec,
 	      os_time_t *t);
 
+struct os_tm {
+	int sec; /* 0..59 or 60 for leap seconds */
+	int min; /* 0..59 */
+	int hour; /* 0..23 */
+	int day; /* 1..31 */
+	int month; /* 1..12 */
+	int year; /* Four digit year */
+};
+
+int os_gmtime(os_time_t t, struct os_tm *tm);
 
 /**
  * os_daemonize - Run in the background (detach from the controlling terminal)

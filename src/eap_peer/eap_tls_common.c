@@ -2,14 +2,8 @@
  * EAP peer: EAP-TLS/PEAP/TTLS/FAST common functions
  * Copyright (c) 2004-2009, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -112,7 +106,6 @@ static int eap_tls_params_from_conf(struct eap_sm *sm,
 		wpa_printf(MSG_DEBUG, "TLS: using phase1 config options");
 		eap_tls_params_from_conf1(params, config);
 	}
-	params->tls_ia = data->tls_ia;
 
 	/*
 	 * Use blob data, if available. Otherwise, leave reference to external
@@ -295,9 +288,9 @@ u8 * eap_peer_tls_derive_key(struct eap_sm *sm, struct eap_ssl_data *data,
 	os_memcpy(rnd + keys.client_random_len, keys.server_random,
 		  keys.server_random_len);
 
-	if (tls_prf(keys.master_key, keys.master_key_len,
-		    label, rnd, keys.client_random_len +
-		    keys.server_random_len, out, len))
+	if (tls_prf_sha1_md5(keys.master_key, keys.master_key_len,
+			     label, rnd, keys.client_random_len +
+			     keys.server_random_len, out, len))
 		goto fail;
 
 	os_free(rnd);

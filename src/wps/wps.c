@@ -2,14 +2,8 @@
  * Wi-Fi Protected Setup
  * Copyright (c) 2007-2009, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -67,12 +61,11 @@ struct wps_data * wps_init(const struct wps_config *cfg)
 		/* Use special PIN '00000000' for PBC */
 		data->dev_pw_id = DEV_PW_PUSHBUTTON;
 		os_free(data->dev_password);
-		data->dev_password = os_malloc(8);
+		data->dev_password = (u8 *) os_strdup("00000000");
 		if (data->dev_password == NULL) {
 			os_free(data);
 			return NULL;
 		}
-		os_memset(data->dev_password, '0', 8);
 		data->dev_password_len = 8;
 	}
 
@@ -355,6 +348,19 @@ const u8 * wps_get_uuid_e(const struct wpabuf *msg)
 
 
 /**
+ * wps_is_20 - Check whether WPS attributes claim support for WPS 2.0
+ */
+int wps_is_20(const struct wpabuf *msg)
+{
+	struct wps_parse_attr attr;
+
+	if (msg == NULL || wps_parse_msg(msg, &attr) < 0)
+		return 0;
+	return attr.version2 != NULL;
+}
+
+
+/**
  * wps_build_assoc_req_ie - Build WPS IE for (Re)Association Request
  * @req_type: Value for Request Type attribute
  * Returns: WPS IE or %NULL on failure
@@ -443,7 +449,6 @@ struct wpabuf * wps_build_probe_req_ie(int pbc, struct wps_device_data *dev,
 				       const u8 *req_dev_types)
 {
 	struct wpabuf *ie;
-	u16 methods = 0;
 
 	wpa_printf(MSG_DEBUG, "WPS: Building WPS IE for Probe Request");
 
@@ -451,35 +456,9 @@ struct wpabuf * wps_build_probe_req_ie(int pbc, struct wps_device_data *dev,
 	if (ie == NULL)
 		return NULL;
 
-	methods |= WPS_CONFIG_PUSHBUTTON;
-#ifdef CONFIG_WPS2
-	/*
-	 * TODO: Should figure out whether this device has a physical or
-	 * virtual pushbutton.
-	 */
-	methods |= WPS_CONFIG_VIRT_PUSHBUTTON;
-#endif /* CONFIG_WPS2 */
-
-	/*
-	 * TODO: Should figure out whether this Probe Request was triggered
-	 * using physical or virtual display. Also, if the device has a PIN on
-	 * a label, that should be indicated here.
-	 */
-	methods |= WPS_CONFIG_DISPLAY |
-#ifdef CONFIG_WPS2
-		WPS_CONFIG_VIRT_DISPLAY |
-#endif /* CONFIG_WPS2 */
-		WPS_CONFIG_KEYPAD;
-#ifdef CONFIG_WPS_UFD
-	methods |= WPS_CONFIG_USBA;
-#endif /* CONFIG_WPS_UFD */
-#ifdef CONFIG_WPS_NFC
-	methods |= WPS_CONFIG_NFC_INTERFACE;
-#endif /* CONFIG_WPS_NFC */
-
 	if (wps_build_version(ie) ||
 	    wps_build_req_type(ie, req_type) ||
-	    wps_build_config_methods(ie, methods) ||
+	    wps_build_config_methods(ie, dev->config_methods) ||
 	    wps_build_uuid_e(ie, uuid) ||
 	    wps_build_primary_dev_type(dev, ie) ||
 	    wps_build_rf_bands(dev, ie) ||

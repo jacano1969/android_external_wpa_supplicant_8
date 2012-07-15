@@ -2,14 +2,8 @@
  * hostapd / IEEE 802.1X-2004 Authenticator
  * Copyright (c) 2002-2007, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifndef IEEE802_1X_H
@@ -68,6 +62,8 @@ int ieee802_1x_init(struct hostapd_data *hapd);
 void ieee802_1x_deinit(struct hostapd_data *hapd);
 int ieee802_1x_tx_status(struct hostapd_data *hapd, struct sta_info *sta,
 			 const u8 *buf, size_t len, int ack);
+int ieee802_1x_eapol_tx_status(struct hostapd_data *hapd, struct sta_info *sta,
+			       const u8 *data, int len, int ack);
 u8 * ieee802_1x_get_identity(struct eapol_state_machine *sm, size_t *len);
 u8 * ieee802_1x_get_radius_class(struct eapol_state_machine *sm, size_t *len,
 				 int idx);

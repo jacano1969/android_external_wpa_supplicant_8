@@ -2,14 +2,8 @@
  * EAP peer: EAP-TLS/PEAP/TTLS/FAST common functions
  * Copyright (c) 2004-2009, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifndef EAP_TLS_COMMON_H
@@ -64,11 +58,6 @@ struct eap_ssl_data {
 	 * if the TLS data is not fragmented
 	 */
 	int include_tls_length;
-
-	/**
-	 * tls_ia - Whether TLS/IA is enabled for this TLS connection
-	 */
-	int tls_ia;
 
 	/**
 	 * eap - EAP state machine allocated with eap_peer_sm_init()

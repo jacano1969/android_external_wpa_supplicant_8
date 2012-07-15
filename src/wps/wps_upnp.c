@@ -47,7 +47,7 @@
  * -- Needs renaming with module prefix to avoid polluting the debugger
  * namespace and causing possible collisions with other static fncs
  * and structure declarations when using the debugger.
- * -- The http error code generation is pretty bogus, hopefully noone cares.
+ * -- The http error code generation is pretty bogus, hopefully no one cares.
  *
  * Author: Ted Merrill, Atheros Communications, based upon earlier work
  * as explained above and below.
@@ -172,7 +172,7 @@
 
 #include "includes.h"
 
-#include <assert.h>
+#include <time.h>
 #include <net/if.h>
 #include <netdb.h>
 #include <sys/ioctl.h>
@@ -550,10 +550,13 @@ static void upnp_wps_device_send_event(struct upnp_wps_device_sm *sm)
  */
 void subscription_destroy(struct subscription *s)
 {
+	struct upnp_wps_device_interface *iface;
 	wpa_printf(MSG_DEBUG, "WPS UPnP: Destroy subscription %p", s);
 	subscr_addr_free_all(s);
 	event_delete_all(s);
-	upnp_er_remove_notification(s);
+	dl_list_for_each(iface, &s->sm->interfaces,
+			 struct upnp_wps_device_interface, list)
+		upnp_er_remove_notification(iface->wps->registrar, s);
 	os_free(s);
 }
 

@@ -2,14 +2,8 @@
  * hostapd / EAP-AKA (RFC 4187) and EAP-AKA' (draft-arkko-eap-aka-kdf)
  * Copyright (c) 2005-2008, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -133,14 +127,13 @@ static void * eap_aka_prime_init(struct eap_sm *sm)
 		return NULL;
 
 	data->eap_method = EAP_TYPE_AKA_PRIME;
-	data->network_name = os_malloc(os_strlen(network_name));
+	data->network_name = (u8 *) os_strdup(network_name);
 	if (data->network_name == NULL) {
 		os_free(data);
 		return NULL;
 	}
 
 	data->network_name_len = os_strlen(network_name);
-	os_memcpy(data->network_name, network_name, data->network_name_len);
 
 	data->state = IDENTITY;
 	eap_aka_determine_identity(sm, data, 1, 0);

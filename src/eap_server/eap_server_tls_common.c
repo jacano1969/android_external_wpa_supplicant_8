@@ -2,14 +2,8 @@
  * EAP-TLS/PEAP/TTLS/FAST server common functions
  * Copyright (c) 2004-2009, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -94,9 +88,9 @@ u8 * eap_server_tls_derive_key(struct eap_sm *sm, struct eap_ssl_data *data,
 	os_memcpy(rnd + keys.client_random_len, keys.server_random,
 		  keys.server_random_len);
 
-	if (tls_prf(keys.master_key, keys.master_key_len,
-		    label, rnd, keys.client_random_len +
-		    keys.server_random_len, out, len))
+	if (tls_prf_sha1_md5(keys.master_key, keys.master_key_len,
+			     label, rnd, keys.client_random_len +
+			     keys.server_random_len, out, len))
 		goto fail;
 
 	os_free(rnd);

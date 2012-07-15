@@ -2,14 +2,8 @@
  * hostapd / Configuration helper functions
  * Copyright (c) 2003-2009, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "utils/includes.h"
@@ -426,6 +420,8 @@ static void hostapd_config_free_bss(struct hostapd_bss_config *conf)
 		ssid->dyn_vlan_keys = NULL;
 	}
 
+	os_free(conf->time_zone);
+
 #ifdef CONFIG_IEEE80211R
 	{
 		struct ft_remote_r0kh *r0kh, *r0kh_prev;
@@ -449,6 +445,9 @@ static void hostapd_config_free_bss(struct hostapd_bss_config *conf)
 	}
 #endif /* CONFIG_IEEE80211R */
 
+#ifdef ANDROID_P2P
+	os_free(conf->prioritize);
+#endif
 #ifdef CONFIG_WPS
 	os_free(conf->wps_pin_requests);
 	os_free(conf->device_name);
@@ -467,6 +466,12 @@ static void hostapd_config_free_bss(struct hostapd_bss_config *conf)
 	os_free(conf->model_url);
 	os_free(conf->upc);
 #endif /* CONFIG_WPS */
+
+	os_free(conf->roaming_consortium);
+
+#ifdef CONFIG_RADIUS_TEST
+	os_free(conf->dump_msk_file);
+#endif /* CONFIG_RADIUS_TEST */
 }
 
 

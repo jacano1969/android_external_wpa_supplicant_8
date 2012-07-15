@@ -11,14 +11,8 @@
  *
  * Copyright (c) 2003-2005, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -32,7 +26,7 @@
  *
  * @return	the number of rounds for the given cipher key size.
  */
-void rijndaelKeySetupDec(u32 rk[/*44*/], const u8 cipherKey[])
+static void rijndaelKeySetupDec(u32 rk[/*44*/], const u8 cipherKey[])
 {
 	int Nr = 10, i, j;
 	u32 temp;

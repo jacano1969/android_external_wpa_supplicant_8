@@ -2,14 +2,8 @@
  * EAP server/peer: EAP-pwd shared routines
  * Copyright (c) 2010, Dan Harkins <dharkins@lounge.org>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the BSD license.
- *
- * Alternatively, this software may be distributed under the terms of the
- * GNU General Public License version 2 as published by the Free Software
- * Foundation.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -75,8 +69,8 @@ void eap_pwd_kdf(u8 *key, int keylen, u8 *label, int labellen,
 
 	/* since we're expanding to a bit length, mask off the excess */
 	if (resultbitlen % 8) {
-		mask >>= ((resultbytelen * 8) - resultbitlen);
-		result[0] &= mask;
+		mask <<= (8 - (resultbitlen % 8));
+		result[resultbytelen - 1] &= mask;
 	}
 }
 
@@ -189,6 +183,18 @@ int compute_password_element(EAP_PWD_group *grp, u16 num,
 			    prfbuf, primebitlen);
 
 		BN_bin2bn(prfbuf, primebytelen, x_candidate);
+
+		/*
+		 * eap_pwd_kdf() returns a string of bits 0..primebitlen but
+		 * BN_bin2bn will treat that string of bits as a big endian
+		 * number. If the primebitlen is not an even multiple of 8
+		 * then excessive bits-- those _after_ primebitlen-- so now
+		 * we have to shift right the amount we masked off.
+		 */
+		if (primebitlen % 8)
+			BN_rshift(x_candidate, x_candidate,
+				  (8 - (primebitlen % 8)));
+
 		if (BN_ucmp(x_candidate, grp->prime) >= 0)
 			continue;
 
@@ -265,13 +271,14 @@ int compute_password_element(EAP_PWD_group *grp, u16 num,
 
 int compute_keys(EAP_PWD_group *grp, BN_CTX *bnctx, BIGNUM *k,
 		 BIGNUM *peer_scalar, BIGNUM *server_scalar,
-		 u8 *commit_peer, u8 *commit_server,
+		 u8 *confirm_peer, u8 *confirm_server,
 		 u32 *ciphersuite, u8 *msk, u8 *emsk)
 {
 	HMAC_CTX ctx;
 	u8 mk[SHA256_DIGEST_LENGTH], *cruft;
 	u8 session_id[SHA256_DIGEST_LENGTH + 1];
 	u8 msk_emsk[EAP_MSK_LEN + EAP_EMSK_LEN];
+	int offset;
 
 	if ((cruft = os_malloc(BN_num_bytes(grp->prime))) == NULL)
 		return -1;
@@ -283,19 +290,24 @@ int compute_keys(EAP_PWD_group *grp, BN_CTX *bnctx, BIGNUM *k,
 	session_id[0] = EAP_TYPE_PWD;
 	H_Init(&ctx);
 	H_Update(&ctx, (u8 *)ciphersuite, sizeof(u32));
-	BN_bn2bin(peer_scalar, cruft);
+	offset = BN_num_bytes(grp->order) - BN_num_bytes(peer_scalar);
+	os_memset(cruft, 0, BN_num_bytes(grp->prime));
+	BN_bn2bin(peer_scalar, cruft + offset);
 	H_Update(&ctx, cruft, BN_num_bytes(grp->order));
-	BN_bn2bin(server_scalar, cruft);
+	offset = BN_num_bytes(grp->order) - BN_num_bytes(server_scalar);
+	os_memset(cruft, 0, BN_num_bytes(grp->prime));
+	BN_bn2bin(server_scalar, cruft + offset);
 	H_Update(&ctx, cruft, BN_num_bytes(grp->order));
 	H_Final(&ctx, &session_id[1]);
 
-	/* then compute MK = H(k | commit-peer | commit-server) */
+	/* then compute MK = H(k | confirm-peer | confirm-server) */
 	H_Init(&ctx);
+	offset = BN_num_bytes(grp->prime) - BN_num_bytes(k);
 	os_memset(cruft, 0, BN_num_bytes(grp->prime));
-	BN_bn2bin(k, cruft);
+	BN_bn2bin(k, cruft + offset);
 	H_Update(&ctx, cruft, BN_num_bytes(grp->prime));
-	H_Update(&ctx, commit_peer, SHA256_DIGEST_LENGTH);
-	H_Update(&ctx, commit_server, SHA256_DIGEST_LENGTH);
+	H_Update(&ctx, confirm_peer, SHA256_DIGEST_LENGTH);
+	H_Update(&ctx, confirm_server, SHA256_DIGEST_LENGTH);
 	H_Final(&ctx, mk);
 
 	/* stretch the mk with the session-id to get MSK | EMSK */

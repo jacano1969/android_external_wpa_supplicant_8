@@ -2,21 +2,17 @@
  * SSL/TLS interface functions for OpenSSL
  * Copyright (c) 2004-2011, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
 
 #ifndef CONFIG_SMARTCARD
 #ifndef OPENSSL_NO_ENGINE
+#ifndef ANDROID
 #define OPENSSL_NO_ENGINE
+#endif
 #endif
 #endif
 
@@ -59,6 +55,7 @@ struct tls_global {
 	void (*event_cb)(void *ctx, enum tls_event ev,
 			 union tls_event_data *data);
 	void *cb_ctx;
+	int cert_in_cb;
 };
 
 static struct tls_global *tls_global = NULL;
@@ -694,6 +691,7 @@ void * tls_init(const struct tls_config *conf)
 		if (conf) {
 			tls_global->event_cb = conf->event_cb;
 			tls_global->cb_ctx = conf->cb_ctx;
+			tls_global->cert_in_cb = conf->cert_in_cb;
 		}
 
 #ifdef CONFIG_FIPS
@@ -797,16 +795,21 @@ static int tls_engine_init(struct tls_connection *conn, const char *engine_id,
 		wpa_printf(MSG_ERROR, "ENGINE: Engine ID not set");
 		return -1;
 	}
+#ifndef ANDROID
 	if (pin == NULL) {
 		wpa_printf(MSG_ERROR, "ENGINE: Smartcard PIN not set");
 		return -1;
 	}
+#endif
 	if (key_id == NULL) {
 		wpa_printf(MSG_ERROR, "ENGINE: Key Id not set");
 		return -1;
 	}
 
 	ERR_clear_error();
+#ifdef ANDROID
+	ENGINE_load_dynamic();
+#endif
 	conn->engine = ENGINE_by_id(engine_id);
 	if (!conn->engine) {
 		wpa_printf(MSG_ERROR, "ENGINE: engine %s not available [%s]",
@@ -821,11 +824,13 @@ static int tls_engine_init(struct tls_connection *conn, const char *engine_id,
 	}
 	wpa_printf(MSG_DEBUG, "ENGINE: engine initialized");
 
+#ifndef ANDROID
 	if (ENGINE_ctrl_cmd_string(conn->engine, "PIN", pin, 0) == 0) {
 		wpa_printf(MSG_ERROR, "ENGINE: cannot set pin [%s]",
 			   ERR_error_string(ERR_get_error(), NULL));
 		goto err;
 	}
+#endif
 	/* load private key first in-case PIN is required for cert */
 	conn->private_key = ENGINE_load_private_key(conn->engine,
 						    key_id, NULL, NULL);
@@ -1144,7 +1149,7 @@ static void openssl_tls_cert_event(struct tls_connection *conn,
 		return;
 
 	os_memset(&ev, 0, sizeof(ev));
-	if (conn->cert_probe) {
+	if (conn->cert_probe || tls_global->cert_in_cb) {
 		cert = get_x509_cert(err_cert);
 		ev.peer_cert.cert = cert;
 	}
@@ -1661,6 +1666,7 @@ static int tls_global_client_cert(SSL_CTX *ssl_ctx, const char *client_cert)
 
 	if (SSL_CTX_use_certificate_file(ssl_ctx, client_cert,
 					 SSL_FILETYPE_ASN1) != 1 &&
+	    SSL_CTX_use_certificate_chain_file(ssl_ctx, client_cert) != 1 &&
 	    SSL_CTX_use_certificate_file(ssl_ctx, client_cert,
 					 SSL_FILETYPE_PEM) != 1) {
 		tls_show_errors(MSG_INFO, __func__,
@@ -2806,35 +2812,6 @@ int tls_connection_get_keyblock_size(void *tls_ctx,
 unsigned int tls_capabilities(void *tls_ctx)
 {
 	return 0;
-}
-
-
-int tls_connection_set_ia(void *tls_ctx, struct tls_connection *conn,
-			  int tls_ia)
-{
-	return -1;
-}
-
-
-struct wpabuf * tls_connection_ia_send_phase_finished(
-	void *tls_ctx, struct tls_connection *conn, int final)
-{
-	return NULL;
-}
-
-
-int tls_connection_ia_final_phase_finished(void *tls_ctx,
-					   struct tls_connection *conn)
-{
-	return -1;
-}
-
-
-int tls_connection_ia_permute_inner_secret(void *tls_ctx,
-					   struct tls_connection *conn,
-					   const u8 *key, size_t key_len)
-{
-	return -1;
 }
 
 

@@ -2,14 +2,8 @@
  * hostapd / RADIUS Accounting
  * Copyright (c) 2002-2009, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "utils/includes.h"
@@ -236,6 +230,7 @@ static void accounting_interim_update(void *eloop_ctx, void *timeout_ctx)
 void accounting_sta_start(struct hostapd_data *hapd, struct sta_info *sta)
 {
 	struct radius_msg *msg;
+	struct os_time t;
 	int interval;
 
 	if (sta->acct_session_started)
@@ -247,7 +242,8 @@ void accounting_sta_start(struct hostapd_data *hapd, struct sta_info *sta)
 		       "starting accounting session %08X-%08X",
 		       sta->acct_session_id_hi, sta->acct_session_id_lo);
 
-	time(&sta->acct_session_start);
+	os_get_time(&t);
+	sta->acct_session_start = t.sec;
 	sta->last_rx_bytes = sta->last_tx_bytes = 0;
 	sta->acct_input_gigawords = sta->acct_output_gigawords = 0;
 	hostapd_drv_sta_clear_stats(hapd, sta->addr);

@@ -2,14 +2,8 @@
  * WPA Supplicant - Common definitions
  * Copyright (c) 2004-2008, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifndef DEFS_H
@@ -74,6 +68,11 @@ static inline int wpa_key_mgmt_wpa(int akm)
 {
 	return wpa_key_mgmt_wpa_ieee8021x(akm) ||
 		wpa_key_mgmt_wpa_psk(akm);
+}
+
+static inline int wpa_key_mgmt_wpa_any(int akm)
+{
+	return wpa_key_mgmt_wpa(akm) || (akm & WPA_KEY_MGMT_WPA_NONE);
 }
 
 
@@ -266,5 +265,22 @@ enum hostapd_hw_mode {
 	HOSTAPD_MODE_IEEE80211A,
 	NUM_HOSTAPD_MODES
 };
+
+/**
+ * enum wpa_ctrl_req_type - Control interface request types
+ */
+enum wpa_ctrl_req_type {
+	WPA_CTRL_REQ_UNKNOWN,
+	WPA_CTRL_REQ_EAP_IDENTITY,
+	WPA_CTRL_REQ_EAP_PASSWORD,
+	WPA_CTRL_REQ_EAP_NEW_PASSWORD,
+	WPA_CTRL_REQ_EAP_PIN,
+	WPA_CTRL_REQ_EAP_OTP,
+	WPA_CTRL_REQ_EAP_PASSPHRASE,
+	NUM_WPA_CTRL_REQS
+};
+
+/* Maximum number of EAP methods to store for EAP server user information */
+#define EAP_MAX_METHODS 8
 
 #endif /* DEFS_H */

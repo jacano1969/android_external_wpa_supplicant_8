@@ -2,14 +2,8 @@
  * hostapd - IEEE 802.11i-2004 / WPA Authenticator
  * Copyright (c) 2004-2007, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifndef WPA_AUTH_H
@@ -208,6 +202,7 @@ struct wpa_auth_callbacks {
 struct wpa_authenticator * wpa_init(const u8 *addr,
 				    struct wpa_auth_config *conf,
 				    struct wpa_auth_callbacks *cb);
+int wpa_init_keys(struct wpa_authenticator *wpa_auth);
 void wpa_deinit(struct wpa_authenticator *wpa_auth);
 int wpa_reconfig(struct wpa_authenticator *wpa_auth,
 		 struct wpa_auth_config *conf);

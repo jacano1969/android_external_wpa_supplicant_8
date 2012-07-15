@@ -2,14 +2,8 @@
  * Wi-Fi Protected Setup - attribute parsing
  * Copyright (c) 2008, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -557,7 +551,9 @@ int wps_parse_msg(const struct wpabuf *msg, struct wps_parse_attr *attr)
 {
 	const u8 *pos, *end;
 	u16 type, len;
+#ifdef WPS_WORKAROUNDS
 	u16 prev_type = 0;
+#endif /* WPS_WORKAROUNDS */
 
 	os_memset(attr, 0, sizeof(*attr));
 	pos = wpabuf_head(msg);
@@ -622,7 +618,9 @@ int wps_parse_msg(const struct wpabuf *msg, struct wps_parse_attr *attr)
 		if (wps_set_attr(attr, type, pos, len) < 0)
 			return -1;
 
+#ifdef WPS_WORKAROUNDS
 		prev_type = type;
+#endif /* WPS_WORKAROUNDS */
 		pos += len;
 	}
 

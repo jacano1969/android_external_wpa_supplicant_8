@@ -11,14 +11,8 @@
  *
  * Copyright (c) 2003-2005, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -27,7 +21,7 @@
 #include "crypto.h"
 #include "aes_i.h"
 
-void rijndaelEncrypt(const u32 rk[/*44*/], const u8 pt[16], u8 ct[16])
+static void rijndaelEncrypt(const u32 rk[/*44*/], const u8 pt[16], u8 ct[16])
 {
 	u32 s0, s1, s2, s3, t0, t1, t2, t3;
 	const int Nr = 10;
