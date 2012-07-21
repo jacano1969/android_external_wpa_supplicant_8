@@ -36,8 +36,8 @@
 #define ETH_P_80211_RAW 0x0019
 #endif
 #endif /* CONFIG_WPS */
-
-#include "wireless_copy.h"
+#include "linux_wext.h"
+//#include "wireless_copy.h" replaced by above
 
 #include "driver.h"
 #include "eloop.h"
@@ -570,6 +570,8 @@ static void ar6000_raw_receive(void *ctx, const u8 *src_addr, const u8 *buf,
 
 	os_memset(&event, 0, sizeof(event));
 	event.rx_probe_req.sa = mgmt->sa;
+	event.rx_probe_req.da = mgmt->da;
+	event.rx_probe_req.bssid = mgmt->bssid;
 	event.rx_probe_req.ie = mgmt->u.probe_req.variable;
 	event.rx_probe_req.ie_len =
 		len - (IEEE80211_HDRLEN + sizeof(mgmt->u.probe_req));
@@ -1183,6 +1185,8 @@ ar6000_get_ssid(void *priv, u8 *buf, int len)
     os_strlcpy(iwr.ifr_name, drv->iface, IFNAMSIZ);
     iwr.u.essid.pointer = (caddr_t) buf;
     iwr.u.essid.length = len;
+    iwr.u.essid.length = (len > IW_ESSID_MAX_SIZE) ?
+		IW_ESSID_MAX_SIZE : len;
 
     if (ioctl(drv->ioctl_sock, SIOCGIWESSID, &iwr) >= 0) {
         ret = iwr.u.essid.length;
